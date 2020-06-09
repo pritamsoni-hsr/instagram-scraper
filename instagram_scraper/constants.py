@@ -39,3 +39,6 @@ RETRY_DELAY = 5
 MAX_RETRY_DELAY = 60
 
 LATEST_STAMPS_USER_SECTION = 'users'
+
+QUERY_FOLLOWERS = BASE_URL + 'graphql/query/?query_hash=c76146de99bb02f6415203be841dd25a&variables={0}'
+QUERY_FOLLOWERS_VARS = '{{"id":"{0}","first":50,"after":"{1}"}}'

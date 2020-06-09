@@ -403,6 +403,45 @@ class InstagramScraper(object):
                 return followings, end_cursor
         return None, None
 
+    def query_followers_gen(self, username, end_cursor='', output=None):
+        """Generator for followers."""
+        # output could be username or json
+        # need credentials for this endpoint
+        self.output = output
+        user = self.deep_get(self.get_shared_data(username), 'entry_data.ProfilePage[0].graphql.user')
+        id = user['id']
+        followers, end_cursor = self.__query_followers(id, end_cursor)
+        if output == 'json':
+            followers = filter(lambda x: x['username'], followers)
+        if followers:
+            while True:
+                for follower in followers:
+                    yield follower
+                if end_cursor:
+                    followers, end_cursor = self.__query_followers(id, end_cursor)
+                    if output == 'json':
+                        followers = filter(lambda x: x['username'], followers)
+                else:
+                    return
+
+    def __query_followers(self, id, end_cursor=''):
+        params = QUERY_FOLLOWERS_VARS.format(id, end_cursor)
+        resp = self.get_json(QUERY_FOLLOWERS.format(params))
+
+        if resp is not None:
+            payload = json.loads(resp)['data']['user']['edge_followed_by']
+            if payload:
+                end_cursor = payload['page_info']['end_cursor']
+                followers = []
+                for node in payload['edges']:
+                    if self.output == 'json':
+                        followers.append(node['node'])
+                    else:
+                        followers.append(node['node']['username'])
+                return followers, end_cursor
+        return None, None
+
+
     def query_comments_gen(self, shortcode, end_cursor=''):
         """Generator for comments."""
         comments, end_cursor = self.__query_comments(shortcode, end_cursor)
